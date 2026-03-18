@@ -1,0 +1,148 @@
+# BUILD ME: ScreenMirror Pro - Android Screen Mirroring Application
+
+## PROJECT OVERVIEW
+Create a cross-platform desktop application (Windows/Mac/Linux) that mirrors Android device
+screens in real-time with low latency, similar to Vysor, scrcpy, or ApowerMirror. Include
+control features (mouse/keyboard), recording, and multi-device support.
+
+## CORE FEATURES (MVP)
+1. Screen Mirroring: Real-time H.264 video stream from Android device
+2. Input Control: Send mouse/touch events, keyboard input to device
+3. Multi-device: Connect multiple Android devices simultaneously
+4. Recording: Record mirror session as MP4
+5. Clean UI: Dark/light theme, drag-to-resize window, always-on-top
+6. Wireless + USB: Support both ADB over WiFi and USB
+
+## TECHNICAL REQUIREMENTS
+Backend Stack
+Node.js + Electron (for cross-platform desktop) OR Rust + Tauri (lighter, faster) + WebView
+
+Android Dependencies
+- ADB (Android Debug Bridge) integration
+- scrcpy protocol OR custom WebRTC/H.264 streaming
+- Android Debug Bridge commands for control
+
+Key Libraries
+scrcpy (C implementation) - bind to Rust/JS
+ADBKit (Node.js) - for ADB commands
+FFmpeg - for video encoding/decoding/recording
+WebRTC - optional wireless streaming
+Sodium - secure device pairing
+
+## DETAILED SPECIFICATIONS
+
+1) Device Connection & Discovery
+- Auto-detect Android devices via ADB USB + Wireless (TCP/IP ADB)
+- Device pairing with QR code + PIN (secure)
+- Save trusted devices
+- Show device info: model, Android version, resolution, FPS
+
+2) Video Streaming (60 FPS target, <100ms latency)
+- H.264 encoding on device (software or hardware)
+- VP8/WebM fallback
+- Dynamic bitrate adjustment based on network
+- Resolution scaling (native, 720p, 480p)
+- Frame rate control (60/30/15 FPS)
+
+3) Input Control
+- Mouse: click, drag, scroll, right-click
+- Keyboard: full text input + Android IME support
+- Touch gestures: pinch-to-zoom, swipe
+- Volume/media keys
+- Power button, Home/Back/Recent (mapped to F1-F3)
+- Paste clipboard from PC to device
+
+4) UI/UX Requirements
+- Minimalist dark theme (primary: #1a1a1a, accent: #00d4aa)
+- Device list sidebar (compact cards)
+- Mirror window: borderless, resizable, always-on-top toggle
+- Toolbar: record, screenshot, rotate, fullscreen
+- Status bar: FPS, latency, battery, connection type
+- Settings: quality presets, hotkeys, startup options
+
+5) Advanced Features
+- Session recording (MP4 with audio)
+- Screenshots (PNG)
+- File transfer (drag-drop)
+- Multi-monitor support
+- Hotkeys (global): Ctrl+Alt+D toggle, Ctrl+Alt+R record
+- Startup with Windows/Mac
+
+## FOLDER STRUCTURE
+screenmirror-pro/
+├── src/
+│   ├── main.rs (or main.js for Electron)
+│   ├── adb/
+│   ├── stream/
+│   ├── control/
+│   ├── ui/
+│   └── recording/
+├── assets/
+├── Cargo.toml (or package.json)
+└── README.md
+
+## TECHNICAL IMPLEMENTATION GUIDELINES
+Preferred Architecture (Rust + Tauri)
+1. Tauri frontend (Svelte/Vue + TailwindCSS)
+2. Rust backend with:
+   - adb-sys crate (ADB bindings)
+   - scrcpy-rs OR ffmpeg-next
+   - tokio for async streaming
+   - tauri-plugin-shell for system commands
+3. WebSocket between frontend/backend for low-latency control
+
+Connection Flow
+1. Scan ADB devices → list in UI
+2. User selects device → pair (USB/WiFi)
+3. Launch scrcpy OR custom stream → pipe to video element
+4. Bidirectional control via ADB input commands
+5. Overlay input visualization on mirror
+
+Performance Targets
+- <100ms end-to-end latency (USB)
+- <200ms wireless (good WiFi)
+- 60 FPS @ 720p (USB)
+- 30 FPS @ 720p (wireless)
+- <50MB RAM usage
+
+## SECURITY & LEGAL
+- No root required
+- No Google Play Services dependency
+- USB debugging only (standard Android feature)
+- Local-only (no cloud)
+- Encrypted device pairing
+- Clear EULA about legitimate use only
+
+## DELIVERABLES
+1. Complete, working Electron/Rust+Tauri app
+2. Windows/Mac installer (.exe/.dmg)
+3. Linux AppImage
+4. Sample Android test device setup guide
+5. 3 demo videos (connection, control, recording)
+6. README with screenshots + setup instructions
+
+## SIMILARITY TO EXISTING TOOLS
+- Like Vysor: polished UI, easy wireless
+- Like scrcpy: low latency, open-source protocol
+- Like AirDroid: multi-device, file transfer
+- Better than all: modern UI + multi-device tabs
+
+## SUCCESS METRICS
+- Mirrors screen at 60 FPS with <100ms lag
+- Full mouse/keyboard control works smoothly
+- Records clean MP4 with audio
+- Wireless works on same WiFi network
+- App <100MB download, <50MB RAM
+
+## BONUS POINTS
+- Portrait/landscape auto-rotate
+- Android 14+ support
+- iOS mirroring (bonus stretch goal)
+- Cloud sync of recordings
+- Team sharing (multi-user)
+
+Start with MVP (single device mirroring + control), then add multi-device/recording.
+Provide complete, copy-pasteable code with proper error handling and loading states.
+Include build scripts for all platforms.
+
+Add all the code related to app in Phone screen mirroring app folder in this workspace.

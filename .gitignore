@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+.env
+.env.*
+!.env.example
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.snap
+*.log
+.DS_Store
+Thumbs.db
+assets/icon.icns
+assets/icon.ico
+bin/

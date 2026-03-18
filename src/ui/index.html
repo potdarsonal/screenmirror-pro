@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ScreenMirror Pro — Low-latency Android screen mirroring"/>
+  <title>ScreenMirror Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body class="dark">
+
+<!-- ── Title bar (macOS custom) ── -->
+<div class="titlebar" id="titlebar">
+  <div class="titlebar-drag">
+    <img src="../assets/logo.svg" class="titlebar-logo" alt="ScreenMirror Pro" onerror="this.style.display='none'"/>
+    <span class="titlebar-title">ScreenMirror Pro</span>
+  </div>
+  <div class="titlebar-actions">
+    <button class="btn-icon" id="btn-theme" title="Toggle theme" aria-label="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+    <button class="btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- ── Main layout ── -->
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Devices</h2>
+      <div class="sidebar-header-actions">
+        <button class="btn-icon pulse-breath" id="btn-scan" title="Scan for devices" aria-label="Scan for devices">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button class="btn-icon" id="btn-add-wireless" title="Add wireless device" aria-label="Add wireless device">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="device-list" id="device-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="sidebar-empty" id="sidebar-empty">
+      <div class="empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <rect x="7" y="2" width="10" height="20" rx="2" ry="2"/>
+          <line x1="12" y1="18" x2="12" y2="18"/>
+        </svg>
+      </div>
+      <p>No devices connected</p>
+      <small>Connect via USB or add wireless device</small>
+    </div>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <main class="main-content" id="main-content">
+
+    <!-- Welcome / home view -->
+    <div class="home-view" id="home-view">
+      <div class="home-hero">
+        <div class="hero-glow"></div>
+        <div class="hero-icon">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+            <defs>
+              <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00d4aa"/>
+                <stop offset="100%" stop-color="#0066ff"/>
+              </linearGradient>
+            </defs>
+            <rect x="7" y="2" width="10" height="20" rx="2" stroke="url(#heroGrad)" stroke-width="1.5"/>
+            <path d="M4 8l-2 2 2 2" stroke="url(#heroGrad)" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M20 8l2 2-2 2" stroke="url(#heroGrad)" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="12" cy="18.5" r="0.75" fill="url(#heroGrad)"/>
+          </svg>
+        </div>
+        <h1>ScreenMirror Pro</h1>
+        <p class="hero-subtitle">Low-latency Android mirroring &amp; control</p>
+
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <span class="stat-value">&lt;100ms</span>
+            <span class="stat-label">USB Latency</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-value">60 FPS</span>
+            <span class="stat-label">Max Frame Rate</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-value">H.264</span>
+            <span class="stat-label">Video Codec</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-start">
+        <h3>Quick Start</h3>
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <h4>Enable USB Debugging</h4>
+            <p>Settings → About → tap Build Number 7×, then Developer Options → USB Debugging</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <h4>Connect Your Device</h4>
+            <p>Plug in via USB or use "Add Wireless" to connect over WiFi (same network)</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <h4>Mirror &amp; Control</h4>
+            <p>Click a device card → Open Mirror. Use mouse &amp; keyboard to control your phone</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon accent">📱</div>
+          <h4>Real-time Mirror</h4>
+          <p>H.264 hardware-accelerated streaming with scrcpy protocol</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon blue">🖱️</div>
+          <h4>Full Control</h4>
+          <p>Mouse clicks, drag, scroll, keyboard input, and gestures</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon purple">⏺️</div>
+          <h4>Screen Recording</h4>
+          <p>Record sessions as MP4 with one click</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon green">📶</div>
+          <h4>USB + WiFi</h4>
+          <p>Connect over USB or wireless ADB on the same network</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Wireless Connect Modal ── -->
+<div class="modal-backdrop hidden" id="wireless-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wireless-modal-title">
+    <div class="modal-header">
+      <h3 id="wireless-modal-title">Connect Wireless Device</h3>
+      <button class="btn-icon modal-close" id="wireless-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="wifi-host">Device IP Address</label>
+        <input type="text" id="wifi-host" placeholder="192.168.1.x" autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label for="wifi-port">Port</label>
+        <input type="number" id="wifi-port" value="5555" placeholder="5555"/>
+      </div>
+      <div class="alert info" id="wireless-hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        First enable wireless ADB: <code>adb tcpip 5555</code>
+      </div>
+      <div class="modal-status hidden" id="wireless-status"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="wireless-cancel">Cancel</button>
+      <button class="btn btn-primary" id="wireless-connect">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Settings Panel ── -->
+<div class="settings-panel hidden" id="settings-panel" role="dialog" aria-label="Settings">
+  <div class="settings-overlay" id="settings-overlay"></div>
+  <div class="settings-drawer">
+    <div class="settings-header">
+      <h3>Settings</h3>
+      <button class="btn-icon" id="settings-close" aria-label="Close settings">✕</button>
+    </div>
+    <div class="settings-body">
+      <section class="settings-section">
+        <h4>Default Quality</h4>
+        <div class="radio-group" id="quality-group">
+          <label class="radio-opt"><input type="radio" name="quality" value="native"/> Native</label>
+          <label class="radio-opt"><input type="radio" name="quality" value="hd"/> HD 1080p</label>
+          <label class="radio-opt"><input type="radio" name="quality" value="720p" checked/> 720p</label>
+          <label class="radio-opt"><input type="radio" name="quality" value="480p"/> 480p</label>
+        </div>
+      </section>
+      <section class="settings-section">
+        <h4>Mirror Window</h4>
+        <label class="toggle-row">
+          <span>Always on top</span>
+          <input type="checkbox" id="setting-always-on-top" class="toggle"/>
+        </label>
+      </section>
+      <section class="settings-section">
+        <h4>Recordings</h4>
+        <div class="form-group">
+          <label for="recordings-dir">Save location</label>
+          <div class="input-row">
+            <input type="text" id="recordings-dir" readonly placeholder="~/Movies/ScreenMirror Pro"/>
+            <button class="btn btn-ghost btn-sm" id="btn-choose-dir">Browse</button>
+          </div>
+        </div>
+      </section>
+      <section class="settings-section">
+        <h4>Hotkeys</h4>
+        <div class="hotkey-list">
+          <div class="hotkey-row"><span>Toggle window</span><kbd>⌘⌥D</kbd></div>
+          <div class="hotkey-row"><span>Toggle record</span><kbd>⌘⌥R</kbd></div>
+          <div class="hotkey-row"><span>Screenshot</span><kbd>⌘⌥S</kbd></div>
+          <div class="hotkey-row"><span>Home button</span><kbd>F1</kbd></div>
+          <div class="hotkey-row"><span>Back button</span><kbd>F2</kbd></div>
+          <div class="hotkey-row"><span>Recents</span><kbd>F3</kbd></div>
+        </div>
+      </section>
+    </div>
+    <div class="settings-footer">
+      <span class="version-label">ScreenMirror Pro v1.0.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Notification toast ── -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mirror — ScreenMirror Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:       #00d4aa;
+      --accent-dim:   #00b08e;
+      --bg:           #000000;
+      --bg-2:         #111111;
+      --bg-3:         #1a1a1a;
+      --bg-4:         #252525;
+      --border:       rgba(255,255,255,0.07);
+      --border-2:     rgba(255,255,255,0.14);
+      --text:         #f0f0f0;
+      --text-2:       #909090;
+      --red:          #f87171;
+      --green:        #34d399;
+      --t-fast:       120ms ease;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* ── Titlebar ─────────────────── */
+    .titlebar {
+      -webkit-app-region: drag;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 38px;
+      padding: 0 8px 0 76px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .titlebar-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .titlebar-actions {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── Toolbar ──────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .tb-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border: 1px solid var(--border-2);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-2);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--t-fast);
+      font-family: inherit;
+    }
+    .tb-btn:hover { background: var(--bg-3); color: var(--text); }
+    .tb-btn.active { background: rgba(0,212,170,0.12); color: var(--accent); border-color: rgba(0,212,170,0.3); }
+    .tb-btn.recording { background: rgba(248,113,113,0.12); color: var(--red); border-color: rgba(248,113,113,0.3); }
+    .tb-btn.recording .rec-dot { background: var(--red); animation: blink 1s ease infinite; }
+
+    .rec-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-2);
+    }
+
+    .tb-sep { width: 1px; height: 18px; background: var(--border-2); margin: 0 2px; }
+    .tb-spacer { flex: 1; }
+
+    .quality-select {
+      background: var(--bg-3);
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      font-size: 11px;
+      font-family: inherit;
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      outline: none;
+    }
+    .quality-select:focus { border-color: var(--accent); }
+
+    /* ── Mirror area ──────────────── */
+    .mirror-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Canvas for drawing frames */
+    #mirror-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      cursor: crosshair;
+      image-rendering: auto;
+    }
+
+    /* Fallback image for screencap mode */
+    #mirror-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: none;
+      cursor: crosshair;
+    }
+
+    .mirror-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .mirror-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(0,212,170,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .mirror-message { font-size: 13px; color: var(--text-2); text-align: center; padding: 0 20px; }
+
+    .mirror-overlay.hidden { display: none; }
+
+    /* Android buttons overlay */
+    .android-btns {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-2);
+      border-radius: 20px;
+      padding: 8px 16px;
+    }
+
+    .android-btn {
+      width: 32px; height: 32px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      color: var(--text-2);
+      font-size: 16px;
+      transition: all var(--t-fast);
+    }
+    .android-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .android-btn:active { transform: scale(0.9); }
+
+    /* Input overlay for keyboard */
+    #keyboard-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px; height: 1px;
+    }
+
+    /* Status bar */
+    .statusbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 10px;
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .stat {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot-green { background: var(--green); }
+    .dot-red   { background: var(--red); }
+    .dot-grey  { background: var(--text-2); }
+
+    /* ── Keyframes ──────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .btn-icon {
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 5px;
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 13px;
+      -webkit-app-region: no-drag;
+    }
+    .btn-icon:hover { background: var(--bg-3); color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+  <span class="titlebar-title" id="window-title">Mirror — Device</span>
+  <div class="titlebar-actions">
+    <button class="btn-icon" id="btn-pin" title="Always on top" aria-label="Toggle always on top">📌</button>
+    <button class="btn-icon" id="btn-rotate" title="Rotate window" aria-label="Rotate window">🔄</button>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="tb-btn" id="btn-record" aria-label="Start recording">
+    <span class="rec-dot"></span>
+    <span id="record-label">Record</span>
+  </button>
+  <button class="tb-btn" id="btn-screenshot" aria-label="Take screenshot">📷 Screenshot</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-home" aria-label="Home button" title="Home (F1)">⌂ Home</button>
+  <button class="tb-btn" id="btn-back" aria-label="Back button" title="Back (F2)">← Back</button>
+  <button class="tb-btn" id="btn-recent" aria-label="Recent apps" title="Recents (F3)">⊡ Recents</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-vol-up" aria-label="Volume up">🔊+</button>
+  <button class="tb-btn" id="btn-vol-down" aria-label="Volume down">🔊−</button>
+  <div class="tb-spacer"></div>
+  <select class="quality-select" id="quality-select" aria-label="Stream quality">
+    <option value="native">Native</option>
+    <option value="hd">HD 1080p</option>
+    <option value="720p" selected>720p</option>
+    <option value="480p">480p</option>
+  </select>
+</div>
+
+<!-- Mirror area -->
+<div class="mirror-wrap" id="mirror-wrap">
+  <canvas id="mirror-canvas" width="720" height="1280"></canvas>
+  <img id="mirror-img" alt="Device screen"/>
+
+  <!-- Hidden keyboard input -->
+  <input type="text" id="keyboard-input" autocomplete="off" spellcheck="false"/>
+
+  <!-- Loading overlay -->
+  <div class="mirror-overlay" id="mirror-overlay">
+    <div class="mirror-spinner"></div>
+    <p class="mirror-message" id="mirror-message">Connecting to device…</p>
+  </div>
+
+  <!-- Android hardware buttons -->
+  <div class="android-btns" id="android-btns">
+    <button class="android-btn" id="dpad-back" title="Back (F2)" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <button class="android-btn" id="dpad-home" title="Home (F1)" aria-label="Home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="4"/>
+      </svg>
+    </button>
+    <button class="android-btn" id="dpad-recent" title="Recents (F3)" aria-label="Recent apps">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="statusbar">
+  <div class="stat"><div class="dot dot-grey" id="conn-dot"></div><span id="conn-status">Disconnected</span></div>
+  <div class="stat">FPS: <span id="stat-fps">—</span></div>
+  <div class="stat">Latency: <span id="stat-latency">—</span></div>
+  <div class="stat" id="rec-timer-wrap" style="display:none">⏺ <span id="rec-timer">00:00</span></div>
+</div>
+
+<script src="mirror.js"></script>
+</body>
+</html>
