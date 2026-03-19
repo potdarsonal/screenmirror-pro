@@ -201,6 +201,10 @@ async function initManagers() {
     mainWindow?.webContents.send('device:list', devices);
   });
 
+  adbManager.on('adb-error', (info) => {
+    mainWindow?.webContents.send('adb:error', info);
+  });
+
   await adbManager.startMonitoring();
 }
 
@@ -215,6 +219,11 @@ function cleanup() {
 // ---------------------------------------------------------------------------
 ipcMain.handle('device:list', async () => {
   return adbManager ? adbManager.getDevices() : [];
+});
+
+ipcMain.handle('adb:check', async () => {
+  if (!adbManager) return { ok: false, message: 'ADB manager not initialised' };
+  return adbManager.checkADB();
 });
 
 ipcMain.handle('device:connect-wireless', async (_, { host, port }) => {

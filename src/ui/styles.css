@@ -633,6 +633,41 @@ kbd {
 .toast.info    { border-color: rgba(59,130,246,0.4); color: #93c5fd; }
 .toast.out { animation: toastOut 250ms ease forwards; }
 
+/* ── ADB banner ──────────────────────────── */
+.adb-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(251, 191, 36, 0.08);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--yellow);
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 900;
+}
+.adb-banner code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: rgba(255,255,255,0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text);
+}
+.adb-banner-hint { color: var(--text-2); font-size: 11px; }
+.adb-dismiss {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+}
+.adb-dismiss:hover { color: var(--text); }
+.adb-recheck { margin-left: 4px; }
+
 /* ── Utilities ────────────────────────────────── */
 .hidden { display: none !important; }
 

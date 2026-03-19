@@ -46,28 +46,61 @@ class ADBManager extends EventEmitter {
   // ADB binary resolution
   // -------------------------------------------------------------------------
   _resolveADB() {
-    // Check bundled binary first, then system PATH
-    const bundledPaths = [
+    // Electron child processes don't inherit shell PATH on macOS,
+    // so we must search all known locations explicitly.
+    const candidates = [
+      // Bundled with app
       path.join(process.resourcesPath || '', 'bin', 'adb'),
       path.join(__dirname, '..', '..', 'bin', 'adb'),
+      // Android Studio SDK
       path.join(os.homedir(), 'Library', 'Android', 'sdk', 'platform-tools', 'adb'),
       path.join(os.homedir(), 'Android', 'Sdk', 'platform-tools', 'adb'),
-      '/usr/local/bin/adb',
+      // Homebrew Apple Silicon
       '/opt/homebrew/bin/adb',
-      'adb', // system PATH fallback
+      '/opt/homebrew/Caskroom/android-platform-tools/35.0.2/platform-tools/adb',
+      // Homebrew Intel
+      '/usr/local/bin/adb',
+      '/usr/local/Caskroom/android-platform-tools/35.0.2/platform-tools/adb',
+      // Common Linux paths
+      '/usr/bin/adb',
+      // Try running `which adb` synchronously via sh (respects user's PATH)
     ];
 
-    for (const p of bundledPaths) {
-      if (p === 'adb') return 'adb';
+    for (const p of candidates) {
       try { if (fs.existsSync(p)) return p; } catch (_) {}
     }
-    return 'adb';
+
+    // Last resort: ask the shell
+    try {
+      const { execSync } = require('child_process');
+      const found = execSync(
+        'bash -lc "which adb 2>/dev/null || command -v adb 2>/dev/null"',
+        { timeout: 3000, encoding: 'utf8' }
+      ).trim();
+      if (found && fs.existsSync(found)) return found;
+    } catch (_) {}
+
+    return 'adb'; // final fallback — rely on PATH being set
   }
 
   async _adb(args, opts = {}) {
     const cmd = `"${this._adbPath}" ${args}`;
-    const { stdout, stderr } = await execAsync(cmd, { timeout: 10000, ...opts });
+    // Inject common binary directories into PATH so adb can find its dependencies
+    const extraPath = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin';
+    const env = { ...process.env, PATH: `${extraPath}:${process.env.PATH || ''}` };
+    const { stdout } = await execAsync(cmd, { timeout: 10000, env, ...opts });
     return stdout.trim();
+  }
+
+  getADBPath() { return this._adbPath; }
+
+  async checkADB() {
+    try {
+      const out = await this._adb('version');
+      return { ok: true, version: out.split('\n')[0] };
+    } catch (err) {
+      return { ok: false, message: err.message, resolvedPath: this._adbPath };
+    }
   }
 
   async _adbDevice(serial, args) {
@@ -101,7 +134,9 @@ class ADBManager extends EventEmitter {
   async _refreshDevices() {
     try {
       const output = await this._adb('devices -l');
-      const lines = output.split('\n').slice(1).filter(l => l.includes('\t'));
+      // Filter lines that start with a serial number (non-empty, non-header)
+      // Note: some ADB versions use spaces instead of tabs as separators
+      const lines = output.split('\n').slice(1).filter(l => /^\S/.test(l.trim()) && l.trim().length > 0);
       const currentSerials = new Set();
 
       for (const line of lines) {
@@ -128,7 +163,8 @@ class ADBManager extends EventEmitter {
 
       this.emit('device-list-updated', Array.from(this._devices.values()));
     } catch (err) {
-      // ADB not installed or daemon not running — silent for now
+      // Emit diagnostic so the UI can tell the user what's wrong
+      this.emit('adb-error', { message: err.message, adbPath: this._adbPath });
     }
   }
 

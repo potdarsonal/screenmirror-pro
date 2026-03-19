@@ -35,12 +35,15 @@ const recordingsDir   = $('recordings-dir');
 const btnChooseDir    = $('btn-choose-dir');
 
 const toastContainer  = $('toast-container');
+const adbBanner       = $('adb-banner');
+const adbBannerMsg    = $('adb-banner-msg');
 
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
   await loadSettings();
   setupEventListeners();
   subscribeToDeviceEvents();
+  await checkADB();
   await scanDevices();
 }
 
@@ -66,6 +69,14 @@ async function loadSettings() {
 function setupEventListeners() {
   // Scan
   btnScan.addEventListener('click', scanDevices);
+
+  // ADB banner
+  $('adb-dismiss')?.addEventListener('click', () => adbBanner.classList.add('hidden'));
+  $('adb-recheck')?.addEventListener('click', async () => {
+    adbBannerMsg.textContent = 'Checking ADB…';
+    await checkADB();
+    await scanDevices();
+  });
 
   // Wireless modal
   btnAddWireless.addEventListener('click', openWirelessModal);
@@ -107,7 +118,23 @@ function setupEventListeners() {
   });
 }
 
-// ── Device subscription ───────────────────────────────────────
+// ── ADB health check ───────────────────────────────────
+// (called on startup and re-check button)
+async function checkADB() {
+  try {
+    const result = await window.smp.adb.check();
+    if (result.ok) {
+      adbBanner.classList.add('hidden');
+    } else {
+      adbBannerMsg.textContent = `ADB not found at “${result.resolvedPath || 'adb'}” —`;
+      adbBanner.classList.remove('hidden');
+    }
+  } catch (_) {
+    adbBanner.classList.remove('hidden');
+  }
+}
+
+// ── Device subscription ───────────────────────────────────────────
 function subscribeToDeviceEvents() {
   window.smp.device.onConnected((device) => {
     const exists = state.devices.find(d => d.serial === device.serial);

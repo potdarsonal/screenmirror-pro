@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld('smp', {
     onListUpdated:      (cb) => { ipcRenderer.on('device:list', (_, list) => cb(list)); },
   },
 
+  // ── ADB ───────────────────────────────────────────────────────────────────
+  adb: {
+    check: () => ipcRenderer.invoke('adb:check'),
+    onError: (cb) => { ipcRenderer.on('adb:error', (_, info) => cb(info)); },
+  },
+
   // ── Stream ───────────────────────────────────────────────────────────────
   stream: {
     start:      (args) => ipcRenderer.invoke('stream:start', args),
